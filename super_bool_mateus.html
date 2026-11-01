@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Super Bool Mateus</title>
+<style>
+:root{--bg:#071522;--panel:#10283a;--line:#2b536a;--white:#f5fbff;--cyan:#54e5ff;--gold:#ffdc62}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#164263,#06101a 72%);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px}
+#app{width:min(100%,1000px);display:flex;flex-direction:column;gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0c2233;border:1px solid var(--line);border-radius:14px;padding:8px 12px;box-shadow:0 6px 18px #0005}
+.logo{font-weight:1000;letter-spacing:.5px;font-size:clamp(16px,3vw,25px);color:var(--gold);text-shadow:0 2px #8d4c00}.logo span{color:var(--cyan)}
+.hud{display:flex;align-items:center;gap:10px;font-weight:900}.score{font-size:clamp(23px,5vw,34px);font-variant-numeric:tabular-nums}.timer{font-size:clamp(16px,3vw,22px);background:#06131d;padding:5px 10px;border-radius:8px;border:1px solid #36566a}
+button{font:inherit;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#startBtn{background:var(--gold);color:#231800;border:0;border-radius:9px;padding:9px 13px;font-weight:1000;box-shadow:0 3px #b17a12}
+#gameWrap{position:relative;border:2px solid #4f8299;border-radius:14px;overflow:hidden;background:#142b3c;box-shadow:0 12px 35px #0008}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;touch-action:none}
+#overlay{position:absolute;inset:0;background:#06121de8;display:flex;align-items:center;justify-content:center;padding:14px;z-index:5}
+#overlay.hidden{display:none}.menu{width:min(100%,430px);max-height:100%;overflow:auto;background:linear-gradient(145deg,#153b53,#0b1b29);border:1px solid #4a839e;border-radius:16px;padding:17px;text-align:center;box-shadow:0 12px 35px #0008}
+.menu h1{font-size:clamp(22px,5vw,34px);margin:0 0 4px;color:var(--gold)}.menu p{margin:5px 0 13px;color:#c7dce8;font-size:13px}
+.menugrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice{border:1px solid #47718a;background:#0a2030;color:white;border-radius:10px;padding:10px 8px;font-weight:800}.choice.selected{border-color:var(--cyan);background:#17516a;box-shadow:inset 0 0 0 1px var(--cyan)}
+#playBtn{width:100%;margin-top:12px;background:linear-gradient(#ffe97e,#ffc638);border:0;border-radius:10px;padding:12px;color:#241800;font-weight:1000;font-size:18px}
+.smallrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:9px}.smallrow button{background:#19364a;border:1px solid #42687d;color:white;border-radius:8px;padding:7px 10px;font-weight:750}
+#message{font-size:12px;color:#9ebdce;text-align:center;min-height:15px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.playerControls{border:1px solid var(--line);background:#0b2030;border-radius:13px;padding:8px;min-width:0}
+.phead{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:900;color:#c6e3f1;margin-bottom:7px}
+.pad{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.ctrl{min-height:47px;border:1px solid #3c6176;border-radius:10px;background:linear-gradient(#23475c,#112d40);color:white;font-size:19px;font-weight:1000;box-shadow:0 3px #07131d;padding:4px 2px}
+.ctrl small{display:block;font-size:9px;line-height:1.1;font-weight:800;color:#bcd8e5}.ctrl.action{font-size:20px}.ctrl.special{color:#ffe66d;border-color:#9d8434}.ctrl.defend{color:#72e7ff}.ctrl:active,.ctrl.active{transform:translateY(2px);box-shadow:0 1px #07131d;background:#26718b}
+footer{font-size:11px;color:#88a8b9;text-align:center}
+@media(max-width:540px){body{padding:6px}#app{gap:6px}header{padding:7px 8px;gap:5px}.hud{gap:5px}#startBtn{padding:8px 9px}.controls{gap:6px}.playerControls{padding:6px}.ctrl{min-height:44px;font-size:17px}.ctrl small{font-size:8px}.phead{font-size:10px}.logo{font-size:15px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo">SUPER <span>BOOL</span> MATEUS</div>
+  <div class="hud"><div class="score"><span id="s0">0</span> : <span id="s1">0</span></div><div class="timer" id="timer">03:00</div><button id="startBtn">START ☰</button></div>
+</header>
+<div id="gameWrap">
+<canvas id="game" width="960" height="540" aria-label="Campo de futebol 2D"></canvas>
+<div id="overlay">
+  <div class="menu">
+    <h1>SUPER BOOL MATEUS</h1>
+    <p>Futebol 1 contra 1 • Escolha como jogar</p>
+    <div style="font-weight:900;margin:9px 0 5px">MODO DE JOGO</div>
+    <div class="menugrid" id="modes">
+      <button class="choice selected" data-mode="ai">🤖 Contra a IA</button>
+      <button class="choice" data-mode="human">👥 2 jogadores</button>
+    </div>
+    <div style="font-weight:900;margin:12px 0 5px">SEU JOGADOR</div>
+    <div class="menugrid" id="players">
+      <button class="choice selected" data-player="Mbappé">⚡ Mbappé</button>
+      <button class="choice" data-player="Cristiano Ronaldo">🔥 Cristiano Ronaldo</button>
+      <button class="choice" data-player="Messi">✨ Messi</button>
+      <button class="choice" data-player="Neymar">🎩 Neymar</button>
+    </div>
+    <div style="font-weight:900;margin:12px 0 5px">ADVERSÁRIO</div>
+    <div class="menugrid" id="opponents">
+      <button class="choice" data-opponent="Mbappé">⚡ Mbappé</button>
+      <button class="choice" data-opponent="Cristiano Ronaldo">🔥 Cristiano Ronaldo</button>
+      <button class="choice selected" data-opponent="Messi">✨ Messi</button>
+      <button class="choice" data-opponent="Neymar">🎩 Neymar</button>
+    </div>
+    <div style="font-weight:900;margin:12px 0 5px">DURAÇÃO</div>
+    <div class="menugrid" id="durations">
+      <button class="choice selected" data-duration="180">⏱️ 3 minutos</button>
+      <button class="choice" data-duration="300">⏱️ 5 minutos</button>
+    </div>
+    <button id="playBtn">⚽ JOGAR!</button>
+    <div class="smallrow"><button id="resumeBtn">Continuar</button><button id="resetBtn">Reiniciar partida</button></div>
+  </div>
+</div>
+</div>
+<div class="controls">
+  <section class="playerControls">
+    <div class="phead"><span>🔵 JOGADOR 1</span><span id="p0name">Mbappé</span></div>
+    <div class="pad">
+      <button class="ctrl" data-action="left" data-p="0">◀<small>ESQ.</small></button>
+      <button class="ctrl" data-action="right" data-p="0">▶<small>DIR.</small></button>
+      <button class="ctrl" data-action="jump" data-p="0">⬆<small>PULAR</small></button>
+      <button class="ctrl defend" data-action="defend" data-p="0">X<small>DEFESA</small></button>
+      <button class="ctrl action" data-action="high" data-p="0">○<small>CHUTE ALTO</small></button>
+      <button class="ctrl action" data-action="low" data-p="0">□<small>CHUTE BAIXO</small></button>
+      <button class="ctrl action special" data-action="special" data-p="0">△<small>ESPECIAL</small></button>
+    </div>
+  </section>
+  <section class="playerControls">
+    <div class="phead"><span>🔴 JOGADOR 2</span><span id="p1name">Messi</span></div>
+    <div class="pad">
+      <button class="ctrl" data-action="left" data-p="1">◀<small>ESQ.</small></button>
+      <button class="ctrl" data-action="right" data-p="1">▶<small>DIR.</small></button>
+      <button class="ctrl" data-action="jump" data-p="1">⬆<small>PULAR</small></button>
+      <button class="ctrl defend" data-action="defend" data-p="1">X<small>DEFESA</small></button>
+      <button class="ctrl action" data-action="high" data-p="1">○<small>CHUTE ALTO</small></button>
+      <button class="ctrl action" data-action="low" data-p="1">□<small>CHUTE BAIXO</small></button>
+      <button class="ctrl action special" data-action="special" data-p="1">△<small>ESPECIAL</small></button>
+    </div>
+  </section>
+</div>
+<div id="message">Dica: no computador, use A/D + W para pular, F para defender, G/H/J para chutar.</div>
+<footer>Sem bola fora • Primeiro a 5 gols vence • Ou vença quando o tempo acabar</footer>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=960,H=540,ground=448;
+const $=id=>document.getElementById(id);
+let mode='ai',chosen='Mbappé',opponent='Messi',duration=180,timeLeft=180,score=[0,0],running=false,ended=false,last=0,elapsed=0,flash=0;
+const names=['Mbappé','Cristiano Ronaldo','Messi','Neymar'];
+const keys=[{},{}];
+let players=[],ball={x:W/2,y:ground-20,vx:0,vy:0,r:13,spin:0};
+const colors=['#39baff','#ff5366'];
+function makePlayer(i,name){return {i,name,x:i===0?190:770,y:ground-55,vx:0,vy:0,w:34,h:55,face:i===0?1:-1,onGround:true,defend:0,kick:0,jumpLock:false};}
+function resetPositions(){players=[makePlayer(0,chosen),makePlayer(1,opponent)];ball={x:W/2,y:ground-18,vx:0,vy:0,r:13,spin:0};}
+function updateHUD(){$('s0').textContent=score[0];$('s1').textContent=score[1];let t=Math.max(0,Math.ceil(timeLeft));$('timer').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('p0name').textContent=chosen;$('p1name').textContent=opponent;}
+function menu(){running=false;$('overlay').classList.remove('hidden');}
+function startGame(){score=[0,0];timeLeft=duration;elapsed=0;ended=false;resetPositions();updateHUD();$('overlay').classList.add('hidden');running=true;$('message').textContent=mode==='ai'?'Você controla o azul. A IA controla o vermelho!':'2 jogadores: azul usa os controles da esquerda; vermelho, da direita.';}
+function resume(){if(!ended){$('overlay').classList.add('hidden');running=true;}}
+$('startBtn').onclick=()=>{running=false;$('overlay').classList.remove('hidden');$('playBtn').textContent=ended?'⚽ JOGAR DE NOVO':'⚽ JOGAR!';};
+$('playBtn').onclick=startGame;
+$('resumeBtn').onclick=resume;
+$('resetBtn').onclick=startGame;
+function setupChoices(id,attr,cb){document.querySelectorAll('#'+id+' .choice').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#'+id+' .choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');cb(b.dataset[attr]);}));}
+setupChoices('modes','mode',v=>mode=v);
+setupChoices('players','player',v=>{chosen=v;$('p0name').textContent=v;});
+setupChoices('opponents','opponent',v=>{opponent=v;$('p1name').textContent=v;});
+setupChoices('durations','duration',v=>duration=Number(v));
+function action(p,a){
+ if(!players[p]||(!running&&a!=='none'))return;
+ let pl=players[p];
+ if(a==='left')keys[p].left=true;
+ if(a==='right')keys[p].right=true;
+ if(a==='jump'&&pl.onGround){pl.vy=-470;pl.onGround=false;}
+ if(a==='defend')pl.defend=.35;
+ if(['high','low','special'].includes(a))kick(p,a);
+}
+function release(p,a){if(keys[p])keys[p][a]=false;}
+function kick(i,type){
+ if(!running)return;
+ const p=players[i],dx=ball.x-p.x,dy=ball.y-(p.y-p.h/2);
+ if(Math.abs(dx)>92||Math.abs(dy)>90)return;
+ let dir=i===0?1:-1;
+ let power=type==='special'?690:type==='high'?460:520;
+ ball.vx=dir*power;ball.vy=type==='high'?-410:type==='special'?-350:-100;
+ ball.spin+=type==='special'?10:4;p.kick=.25;
+ flash=type==='special'?0.22:0;
+}
+document.querySelectorAll('[data-action]').forEach(b=>{
+ const p=Number(b.dataset.p),a=b.dataset.action;
+ const down=e=>{e.preventDefault();b.classList.add('active');action(p,a);};
+ const up=e=>{e.preventDefault();b.classList.remove('active');release(p,a);};
+ b.addEventListener('pointerdown',down);b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up);
+});
+window.addEventListener('keydown',e=>{
+ const k=e.key.toLowerCase();
+ if(['a','d','w','f','g','h','j','arrowleft','arrowright','arrowup',' ','enter'].includes(k))e.preventDefault();
+ if(k==='a'||k==='arrowleft')action(0,'left');
+ if(k==='d'||k==='arrowright')action(0,'right');
+ if(k==='w'||k==='arrowup'||k===' ')action(0,'jump');
+ if(k==='f')action(0,'defend');if(k==='g')action(0,'high');if(k==='h')action(0,'low');if(k==='j')action(0,'special');
+ if(mode==='human'){
+  if(k==='arrowleft')action(1,'left');if(k==='arrowright')action(1,'right');if(k==='arrowup')action(1,'jump');
+ }
+});
+window.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='a'||k==='arrowleft')release(0,'left');if(k==='d'||k==='arrowright')release(0,'right');});
+function goal(i){score[i]++;updateHUD();running=false;$('message').textContent='GOOOOL! '+(i===0?chosen:opponent)+' marcou!';if(score[i]>=5){ended=true;$('message').textContent='FIM DE JOGO! '+(i===0?chosen:opponent)+' venceu por 5 gols!';setTimeout(()=>{ $('overlay').classList.remove('hidden');$('playBtn').textContent='⚽ JOGAR DE NOVO';},800);}else{setTimeout(()=>{resetPositions();if(!ended)running=true;},1000);}}
+function endByTime(){running=false;ended=true;$('message').textContent=score[0]===score[1]?'Fim de jogo! Empate!':('Fim de jogo! '+(score[0]>score[1]?chosen:opponent)+' venceu!');$('overlay').classList.remove('hidden');$('playBtn').textContent='⚽ JOGAR DE NOVO';}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function update(dt){
+ if(!running)return;
+ timeLeft-=dt;if(timeLeft<=0){timeLeft=0;updateHUD();endByTime();return;}
+ elapsed+=dt;
+ players.forEach((p,i)=>{
+  let move=0;
+  if(mode==='ai'&&i===1){
+   const target=ball.x+(ball.x>p.x?-25:18);
+   if(target<p.x-10)move=-1;else if(target>p.x+10)move=1;
+   if(Math.abs(ball.x-p.x)<75&&Math.random()<dt*1.9){kick(i,Math.random()<.25?'special':Math.random()<.5?'high':'low');}
+   if(ball.y<ground-80&&Math.abs(ball.x-p.x)<85&&p.onGround&&Math.random()<dt*1.2){p.vy=-430;p.onGround=false;}
+   if(Math.abs(ball.x-p.x)<55&&ball.x>W*.45&&Math.random()<dt*1.5)p.defend=.2;
+  }else{
+   if(keys[i].left)move-=1;if(keys[i].right)move+=1;
+  }
+  p.vx=move*250;p.x+=p.vx*dt;p.x=clamp(p.x,35,W-35);
+  if(p.vx!==0)p.face=Math.sign(p.vx);
+  p.vy+=1050*dt;p.y+=p.vy*dt;
+  if(p.y>=ground-p.h){p.y=ground-p.h;p.vy=0;p.onGround=true;}
+  p.defend=Math.max(0,p.defend-dt);p.kick=Math.max(0,p.kick-dt);
+  // contact with ball: bump/defend
+  let bx=p.x,by=p.y-p.h/2,dx=ball.x-bx,dy=ball.y-by;
+  if(Math.abs(dx)<p.w/2+ball.r&&Math.abs(dy)<p.h/2+ball.r){
+    if(p.defend>0){ball.vx=(i===0?1:-1)*Math.max(270,Math.abs(ball.vx)*.75);ball.vy=-220;}
+    else if(Math.abs(ball.vx)<120){ball.vx=(i===0?1:-1)*170;ball.vy=-100;}
+  }
+ });
+ ball.vy+=850*dt;ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;ball.spin+=ball.vx*dt*.025;
+ ball.vx*=Math.pow(.993,dt*60);
+ if(ball.y>ground-ball.r){ball.y=ground-ball.r;ball.vy=-Math.abs(ball.vy)*.67;if(Math.abs(ball.vy)<55)ball.vy=0;}
+ if(ball.x<15){if(ball.y>ground-145){goal(1);return;}ball.x=15;ball.vx=Math.abs(ball.vx)*.75;}
+ if(ball.x>W-15){if(ball.y>ground-145){goal(0);return;}ball.x=W-15;ball.vx=-Math.abs(ball.vx)*.75;}
+ updateHUD();
+}
+function drawStadium(){
+ let sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#081726');sky.addColorStop(.55,'#173b52');sky.addColorStop(1,'#0b2432');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // roof and rafters
+ ctx.fillStyle='#050d16';ctx.fillRect(0,0,W,42);ctx.strokeStyle='#33546a';ctx.lineWidth=5;
+ for(let x=0;x<W;x+=95){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+50,42);ctx.stroke();}
+ // crowd stands up to roof
+ const crowdColors=['#ffcf5a','#ff5d71','#4fd8ff','#eaf5ff','#8b79ff','#64e59b'];
+ for(let row=0;row<5;row++){
+  const y=45+row*42;ctx.fillStyle=row%2?'#203f56':'#284d65';ctx.fillRect(0,y,W,40);
+  for(let x=5+(row%2)*8;x<W;x+=17){ctx.fillStyle=crowdColors[(Math.floor(x/17)+row*3)%crowdColors.length];ctx.beginPath();ctx.arc(x,y+13+(x%3),4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d6e7ed';ctx.fillRect(x-3,y+18,6,13);}
+ }
+ // back wall
+ ctx.fillStyle='#0c2431';ctx.fillRect(0,245,W,42);
+ ctx.fillStyle='#ffdc62';ctx.font='900 20px system-ui';ctx.textAlign='center';ctx.fillText('SUPER BOOL MATEUS • FUTEBOL 1 x 1',W/2,272);
+ // field short
+ const fg=ctx.createLinearGradient(0,285,0,ground+80);fg.addColorStop(0,'#1aa75d');fg.addColorStop(1,'#08733f');ctx.fillStyle=fg;ctx.fillRect(0,285,W,H-285);
+ for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#15924f':'#1ca95b';ctx.fillRect(i*W/8,285,W/8,255);}
+ ctx.strokeStyle='#d8ffe5';ctx.lineWidth=3;ctx.strokeRect(22,303,W-44,220);ctx.beginPath();ctx.moveTo(W/2,303);ctx.lineTo(W/2,523);ctx.stroke();ctx.beginPath();ctx.arc(W/2,413,53,0,Math.PI*2);ctx.stroke();
+ // penalty boxes
+ ctx.strokeRect(22,352,118,125);ctx.strokeRect(W-140,352,118,125);ctx.strokeRect(22,380,55,70);ctx.strokeRect(W-77,380,55,70);
+ // oversized goals
+ ctx.lineWidth=7;ctx.strokeStyle='#f2fbff';ctx.strokeRect(-3,356,45,112);ctx.strokeRect(W-42,356,45,112);
+ ctx.lineWidth=1;ctx.strokeStyle='#c5e1ed';for(let y=365;y<465;y+=12){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(38,y);ctx.moveTo(W-38,y);ctx.lineTo(W,y);ctx.stroke();}for(let x=8;x<42;x+=10){ctx.beginPath();ctx.moveTo(x,356);ctx.lineTo(x,468);ctx.moveTo(W-x,356);ctx.lineTo(W-x,468);ctx.stroke();}
+}
+function drawPlayer(p){
+ const x=p.x,y=p.y,top=y-p.h;ctx.save();ctx.translate(x,0);
+ // shadow
+ ctx.fillStyle='#001d15aa';ctx.beginPath();ctx.ellipse(0,ground-2,23,6,0,0,Math.PI*2);ctx.fill();
+ // legs
+ ctx.strokeStyle='#17202b';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-7,y-17);ctx.lineTo(-10+(p.vx?Math.sin(elapsed*16)*4:0),y);ctx.moveTo(7,y-17);ctx.lineTo(10-(p.vx?Math.sin(elapsed*16)*4:0),y);ctx.stroke();
+ // socks
+ ctx.strokeStyle='#f6f8ff';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-10,y-9);ctx.lineTo(-10,y-2);ctx.moveTo(10,y-9);ctx.lineTo(10,y-2);ctx.stroke();
+ // torso
+ ctx.fillStyle=colors[p.i];ctx.fillRect(-15,top+15,30,27);ctx.fillStyle=p.i===0?'#d6f6ff':'#ffe1e5';ctx.fillRect(-15,top+37,30,5);
+ // arms
+ ctx.strokeStyle=p.i===0?'#f2c6a4':'#9c6045';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-13,top+20);ctx.lineTo(-22,top+34);ctx.moveTo(13,top+20);ctx.lineTo(22,top+34);ctx.stroke();
+ // head and hair
+ ctx.fillStyle=p.i===0?'#9c6045':'#d49b70';ctx.beginPath();ctx.arc(0,top+7,12,0,Math.PI*2);ctx.fill();ctx.fillStyle=p.name==='Neymar'?'#292027':p.name==='Messi'?'#765035':p.name==='Cristiano Ronaldo'?'#25252a':'#171e27';ctx.beginPath();ctx.arc(0,top+3,12,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-11,top+1,22,5);
+ // eyes face direction
+ ctx.fillStyle='#101820';ctx.beginPath();ctx.arc(p.face*4,top+8,1.7,0,Math.PI*2);ctx.fill();
+ if(p.defend>0){ctx.strokeStyle='#72e7ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,top+25,30,Math.PI,Math.PI*2);ctx.stroke();}
+ if(p.kick>0){ctx.fillStyle='#fff2a0';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('POW!',0,top-5);}
+ ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(p.name,0,top-12);
+ ctx.restore();
+}
+function drawBall(){
+ ctx.save();ctx.translate(ball.x,ball.y);ctx.rotate(ball.spin);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,ball.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#18232b';ctx.lineWidth=1.5;ctx.stroke();
+ ctx.fillStyle='#17232c';ctx.beginPath();ctx.moveTo(-4,-4);ctx.lineTo(0,-8);ctx.lineTo(5,-4);ctx.lineTo(4,3);ctx.lineTo(-3,4);ctx.closePath();ctx.fill();
+ for(let a=0;a<5;a++){let ang=a*Math.PI*2/5;ctx.beginPath();ctx.arc(Math.cos(ang)*9,Math.sin(ang)*9,2.5,0,Math.PI*2);ctx.fill();}
+ if(flash>0){ctx.strokeStyle='#ffe66d';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,ball.r+7+Math.random()*4,0,Math.PI*2);ctx.stroke();}
+ ctx.restore();
+}
+function render(){
+ drawStadium();
+ // players in field
+ players.forEach(drawPlayer);drawBall();
+ if(!running&&!ended&&$('overlay').classList.contains('hidden')===false){
+  // menu overlay already covers
+ }
+ if(flash>0)flash-=1/60;
+}
+function loop(now){let dt=Math.min(.033,(now-last)/1000||0);last=now;update(dt);render();requestAnimationFrame(loop);}
+resetPositions();updateHUD();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

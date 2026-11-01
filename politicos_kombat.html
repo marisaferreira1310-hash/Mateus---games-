@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>POLÍTICOS KOMBAT 😂</title>
+<style>
+:root{--ink:#171923;--panel:#252a3a;--gold:#ffd34d}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10131c;color:white;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+#game{display:block;width:100vw;height:100dvh;background:#171b29}
+#top{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:min(94vw,900px);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;pointer-events:none}
+.name{font-size:clamp(11px,2.3vw,16px);font-weight:900;text-shadow:0 2px 3px #000}
+.name.right{text-align:right}.bar{height:12px;background:#4a2030;border:2px solid #fff9;border-radius:20px;overflow:hidden;margin-top:3px}.fill{height:100%;width:100%;background:linear-gradient(90deg,#65f28b,#d6ff72);transition:width .15s}
+#clock{font-size:clamp(17px,4vw,25px);font-weight:1000;background:#151927d9;border:2px solid #ffffff55;border-radius:10px;padding:3px 10px}
+#message{position:fixed;top:24%;left:50%;transform:translateX(-50%);font-weight:1000;font-size:clamp(25px,7vw,54px);text-align:center;text-shadow:0 4px #000;pointer-events:none;white-space:pre-line}
+#sub{font-size:clamp(12px,2.8vw,18px);margin-top:4px}
+#controls{position:fixed;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 3vw;pointer-events:none}
+.cluster{display:flex;gap:8px;align-items:center;pointer-events:auto}
+button{border:2px solid #ffffff70;color:white;background:#272d40eF;border-radius:50%;width:clamp(43px,11vw,66px);height:clamp(43px,11vw,66px);font-size:clamp(16px,4vw,23px);font-weight:1000;box-shadow:0 4px 0 #10121a;touch-action:none;user-select:none}
+button:active,button.down{transform:translateY(3px);box-shadow:0 1px 0 #10121a;background:#4a5575}
+button.action{background:#8d2b48}button.special{background:#7650c7}button.jump{background:#187c86}
+#menu{position:fixed;inset:0;background:#0c1019eF;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{width:min(94vw,520px);max-height:94dvh;overflow:auto;background:linear-gradient(145deg,#292f43,#181c29);border:2px solid #ffffff30;border-radius:22px;padding:20px;text-align:center;box-shadow:0 15px 60px #0009}
+h1{font-size:clamp(27px,7vw,42px);line-height:1;margin:4px 0 8px;color:var(--gold);text-shadow:0 3px #000}
+p{margin:8px 0;color:#d9deef;font-size:14px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.pick{width:100%;height:auto;min-height:48px;border-radius:12px;font-size:14px;padding:8px;background:#343b52}
+.pick.selected{border-color:var(--gold);background:#665324}
+.start{width:100%;height:52px;border-radius:14px;background:#d94b59;font-size:18px;margin-top:8px}
+.small{font-size:12px;color:#aeb6cd}
+#restart{position:fixed;right:10px;top:58px;width:39px;height:39px;font-size:17px;border-radius:12px;pointer-events:auto}
+@media (min-width:700px){#controls{padding:0 max(4vw,calc((100vw - 900px)/2)) 16px}.cluster{gap:12px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="top">
+ <div><div class="name" id="pname">LULA</div><div class="bar"><div class="fill" id="hp1"></div></div></div>
+ <div id="clock">60</div>
+ <div><div class="name right" id="ename">TRUMP</div><div class="bar"><div class="fill" id="hp2"></div></div></div>
+</div>
+<button id="restart" aria-label="Menu">☰</button>
+<div id="message"><div id="bigmsg"></div><div id="sub"></div></div>
+<div id="controls">
+ <div class="cluster">
+  <button data-key="left" aria-label="Esquerda">◀</button><button data-key="right" aria-label="Direita">▶</button><button data-key="jump" class="jump" aria-label="Pular">⬆</button>
+ </div>
+ <div class="cluster">
+  <button data-key="x" aria-label="Esquiva">✕</button><button data-key="circle" class="action" aria-label="Soco">○</button><button data-key="square" class="action" aria-label="Chute">□</button><button data-key="triangle" class="special" aria-label="Especial">△</button>
+ </div>
+</div>
+<div id="menu">
+ <div class="card">
+  <h1>POLÍTICOS KOMBAT</h1>
+  <p>Uma luta arcade de caricaturas políticas. Escolha seu lutador e vença! 😂</p>
+  <p><b>Escolha seu lutador:</b></p>
+  <div class="choices" id="picks"></div>
+  <p><b>Escolha o adversário:</b></p>
+  <div class="choices" id="opponentPicks"></div>
+  <p><b>Controles:</b> ○ soco · □ chute · △ especial · ✕ esquiva · ⬅️➡️ andar · ⬆️ pular</p>
+  <p class="small">Jogo leve: sem imagens externas e sem downloads extras.</p>
+  <button class="start" id="start">COMEÇAR A LUTA!</button>
+ </div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const menu=document.getElementById('menu'),picks=document.getElementById('picks'),opponentPicks=document.getElementById('opponentPicks');
+const names=['Lula','Flávio','Trump','Dilma'];
+const colors=['#e34242','#283c78','#e9e7df','#d8b33e'];
+const keys={left:false,right:false,jump:false,x:false,circle:false,square:false,triangle:false};
+let W=800,H=450,dpr=1,player,enemy,selected=0,selectedOpponent=2,started=false,ended=false,time=60,last=0,attackCooldown=0,enemyCooldown=0,particles=[],roundText='',roundTimer=0;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+function addCharacterChoices(container, initial, setter){
+ names.forEach((n,i)=>{
+  let b=document.createElement('button');
+  b.className='pick'+(i===initial?' selected':'');
+  b.textContent=n+(i===0?' 👴🏻':i===1?' 🧑🏻':i===2?' 👴🏼':' 👩🏼');
+  b.onclick=()=>{setter(i);[...container.children].forEach((x,j)=>x.classList.toggle('selected',i===j));};
+  container.appendChild(b);
+ });
+}
+function selectFirstOtherOpponent(){
+ const next=names.findIndex((_,i)=>i!==selected);
+ selectedOpponent=next;
+ [...opponentPicks.children].forEach((x,j)=>x.classList.toggle('selected',j===next));
+}
+addCharacterChoices(picks,0,i=>{selected=i;if(selectedOpponent===selected)selectFirstOtherOpponent();});
+addCharacterChoices(opponentPicks,2,i=>{selectedOpponent=i;if(selectedOpponent===selected)selectFirstOtherOpponent();});
+function fighter(name,x,side){return {name,x,y:0,vx:0,vy:0,side,hp:100,face:side===1?1:-1,ground:true,flash:0,attack:0,dodge:0,color:colors[names.indexOf(name)]||'#7b9',special:0}}
+function start(){if(selectedOpponent===selected)selectFirstOtherOpponent();player=fighter(names[selected],W*.25,1);let opp=selectedOpponent;enemy=fighter(names[opp],W*.75,-1);player.face=1;enemy.face=-1;enemy.color=colors[opp];time=60;started=true;ended=false;menu.style.display='none';document.getElementById('bigmsg').textContent='';document.getElementById('sub').textContent='';particles=[];last=performance.now();document.getElementById('pname').textContent=player.name.toUpperCase();document.getElementById('ename').textContent=enemy.name.toUpperCase();updateBars()}
+document.getElementById('start').onclick=start;
+document.getElementById('restart').onclick=()=>{started=false;ended=false;menu.style.display='flex';document.getElementById('bigmsg').textContent='';document.getElementById('sub').textContent=''};
+function updateBars(){document.getElementById('hp1').style.width=Math.max(0,player?.hp||0)+'%';document.getElementById('hp2').style.width=Math.max(0,enemy?.hp||0)+'%'}
+function attack(who,type){if(who.attack>0||who.dodge>0||ended)return;who.attack=type==='triangle'?.38:type==='square'?.28:.22;who.special=type==='triangle'?1:0;who.attackType=type;
+ if(type==='triangle'){let px=who.x+who.face*30;particles.push({x:px,y:H*.69-35,vx:who.face*430,life:1.5,owner:who,shot:true})}}
+function hit(attacker,target,type){if(target.dodge>0)return;let reach=type==='triangle'?90:type==='square'?66:48;if(Math.abs(attacker.x-target.x)<reach+10){target.hp-=type==='triangle'?14:type==='square'?10:6;target.hp=Math.max(0,target.hp);target.vx=attacker.face*(type==='triangle'?250:150);target.flash=.16;particles.push({x:target.x,y:H*.68-65,vx:0,life:.25,hit:true});updateBars();if(target.hp<=0)finish(attacker===player)}}
+function update(dt){if(!started||ended)return;time-=dt;if(time<=0){time=0;finish(player.hp>=enemy.hp)}document.getElementById('clock').textContent=Math.ceil(time);
+ for(const f of [player,enemy]){f.x+=f.vx*dt;f.vx*=Math.pow(.02,dt);f.y+=f.vy*dt;f.vy+=900*dt;if(f.y>=0){f.y=0;f.vy=0;f.ground=true}else f.ground=false;f.attack=Math.max(0,f.attack-dt);f.dodge=Math.max(0,f.dodge-dt);f.flash=Math.max(0,f.flash-dt)}
+ player.face=player.x<enemy.x?1:-1;enemy.face=enemy.x<player.x?1:-1;
+ if(keys.left)player.vx=-230;if(keys.right)player.vx=230;
+ if(keys.jump&&player.ground){player.vy=-420;player.ground=false;keys.jump=false}
+ if(keys.x)player.dodge=.22;
+ if(keys.circle){attack(player,'circle');keys.circle=false}
+ if(keys.square){attack(player,'square');keys.square=false}
+ if(keys.triangle){attack(player,'triangle');keys.triangle=false}
+ if(player.attack>0&&player.attackType!=='triangle'&&player.attack<.16){hit(player,enemy,player.attackType);player.attack=0}
+ if(enemy.attack>0&&enemy.attackType!=='triangle'&&enemy.attack<.15){hit(enemy,player,enemy.attackType);enemy.attack=0}
+ enemyCooldown-=dt;
+ if(enemyCooldown<=0){let dist=Math.abs(enemy.x-player.x);if(dist>75)enemy.vx=enemy.x>player.x?-105:105;else{enemy.vx=0;attack(enemy,Math.random()<.18?'triangle':Math.random()<.5?'square':'circle');}if(dist<125&&Math.random()<.65)enemyCooldown=.5+Math.random()*.55;else enemyCooldown=.25}
+ for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.x+=p.vx*dt;p.life-=dt;if(p.shot){let target=p.owner===player?enemy:player;if(Math.abs(p.x-target.x)<18){hit(p.owner,target,'triangle');p.life=0}}if(p.life<=0)particles.splice(i,1)}
+ player.x=Math.max(28,Math.min(W-28,player.x));enemy.x=Math.max(28,Math.min(W-28,enemy.x));
+}
+function drawFighter(f){let floor=H*.72,scale=Math.max(.72,Math.min(1.12,H/480)),x=f.x,y=floor-f.y;
+ ctx.save();ctx.translate(x,y);ctx.scale(f.face,1);ctx.scale(scale,scale);
+ // shadow
+ ctx.fillStyle='#080b12aa';ctx.beginPath();ctx.ellipse(0,0,29,7,0,0,Math.PI*2);ctx.fill();
+ // dodge streak
+ if(f.dodge>0){ctx.strokeStyle='#d8f8ff';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-35,-46);ctx.lineTo(-60,-46);ctx.stroke()}
+ // legs
+ ctx.strokeStyle='#202333';ctx.lineWidth=12;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-7,-27);ctx.lineTo(-12,-5);ctx.moveTo(8,-27);ctx.lineTo(14,-5);ctx.stroke();
+ // body and jacket
+ ctx.fillStyle=f.flash>0?'#fff':f.color;ctx.beginPath();ctx.roundRect(-17,-64,34,40,8);ctx.fill();
+ ctx.fillStyle='#f4f0e8';ctx.beginPath();ctx.moveTo(-5,-62);ctx.lineTo(0,-51);ctx.lineTo(5,-62);ctx.fill();
+ // arm and fist
+ ctx.strokeStyle=f.color;ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(-12,-57);ctx.lineTo(-25,-43);ctx.moveTo(12,-57);ctx.lineTo(25,-44);ctx.stroke();
+ ctx.fillStyle='#e9b28c';ctx.beginPath();ctx.arc(f.attack>0?35:25,-43,7,0,Math.PI*2);ctx.fill();
+ // head
+ ctx.fillStyle='#e9b28c';ctx.beginPath();ctx.arc(0,-78,20,0,Math.PI*2);ctx.fill();
+ // hair looks
+ ctx.fillStyle=f.name==='Lula'?'#f3f0df':f.name==='Trump'?'#f0b83c':f.name==='Dilma'?'#f1cf53':'#382a24';
+ if(f.name==='Lula'){ctx.beginPath();ctx.arc(0,-84,20,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#f4f0e7';ctx.beginPath();ctx.ellipse(0,-68,13,10,0,0,Math.PI*2);ctx.fill()}
+ else if(f.name==='Trump'){ctx.beginPath();ctx.ellipse(0,-91,22,8,-.2,0,Math.PI*2);ctx.fill()}
+ else if(f.name==='Dilma'){ctx.beginPath();ctx.arc(0,-84,21,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-21,-83,7,20);ctx.fillRect(14,-83,7,20)}
+ else {ctx.beginPath();ctx.arc(0,-84,19,Math.PI,Math.PI*2);ctx.fill()}
+ // eyes, nose, smile
+ ctx.fillStyle='#222';ctx.beginPath();ctx.arc(-7,-79,2,0,Math.PI*2);ctx.arc(7,-79,2,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#7d3e36';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-72,6,.15,Math.PI-.15);ctx.stroke();
+ // beard for Lula
+ if(f.name==='Lula'){ctx.fillStyle='#f4f0e7';ctx.beginPath();ctx.moveTo(-13,-68);ctx.lineTo(0,-58);ctx.lineTo(13,-68);ctx.lineTo(9,-62);ctx.lineTo(-8,-62);ctx.fill()}
+ // attack visual
+ if(f.attack>0){ctx.strokeStyle=f.special?'#d5a5ff':'#fff2a1';ctx.lineWidth=4;ctx.beginPath();ctx.arc(30,-46,19,-.9,.8);ctx.stroke()}
+ ctx.restore();
+ ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(f.name,x,floor+20);
+}
+function draw(){ctx.clearRect(0,0,W,H);let sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#242d4a');sky.addColorStop(.7,'#454b68');sky.addColorStop(1,'#191d2b');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // crowd silhouettes
+ for(let i=0;i<Math.ceil(W/18);i++){let xx=i*18+3;ctx.fillStyle=i%3?'#151a29':'#22283a';ctx.beginPath();ctx.arc(xx, H*.48+(i%4)*4,7,0,Math.PI*2);ctx.fill();ctx.fillRect(xx-6,H*.49+(i%4)*4,12,26)}
+ // banners
+ ctx.fillStyle='#d9bd61';ctx.fillRect(0,H*.55,W,5);ctx.fillStyle='#29344b';ctx.fillRect(0,H*.56,W,H*.16);
+ // floor
+ ctx.fillStyle='#328451';ctx.fillRect(0,H*.72,W,H*.28);ctx.strokeStyle='#a3e0a9';ctx.lineWidth=2;ctx.strokeRect(12,H*.73,W-24,H*.26);ctx.beginPath();ctx.moveTo(W/2,H*.73);ctx.lineTo(W/2,H);ctx.stroke();ctx.beginPath();ctx.ellipse(W/2,H*.86,Math.min(70,W*.1),28,0,0,Math.PI*2);ctx.stroke();
+ if(started){drawFighter(player);drawFighter(enemy);for(const p of particles){if(p.shot){ctx.fillStyle='#d7a5ff';ctx.shadowBlur=12;ctx.shadowColor='#d7a5ff';ctx.beginPath();ctx.arc(p.x,H*.72-37,10,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}else if(p.hit){ctx.fillStyle='#fff5a6';ctx.font='bold 25px system-ui';ctx.fillText('✦',p.x,p.y)}}}
+ requestAnimationFrame(draw)}
+function loop(now){let dt=Math.min(.035,(now-last)/1000||0);last=now;update(dt);requestAnimationFrame(loop)}
+document.querySelectorAll('[data-key]').forEach(btn=>{const k=btn.dataset.key;const down=e=>{e.preventDefault();keys[k]=true;btn.classList.add('down')};const up=e=>{e.preventDefault();keys[k]=false;btn.classList.remove('down')};btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointercancel',up);btn.addEventListener('pointerleave',up)});
+addEventListener('keydown',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'jump',KeyX:'x',KeyJ:'circle',KeyK:'square',KeyL:'triangle'};if(map[e.code]){keys[map[e.code]]=true;e.preventDefault()}});
+addEventListener('keyup',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'jump',KeyX:'x',KeyJ:'circle',KeyK:'square',KeyL:'triangle'};if(map[e.code])keys[map[e.code]]=false});
+requestAnimationFrame(draw);requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
